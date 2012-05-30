@@ -47,10 +47,11 @@ var OverviewView = Backbone.View.extend({
     $('.error').removeClass('error');
     var server = $('#connect-server').val();
     var nick = $('#connect-nick').val();
-		var port = $('#connect-port').val();
-		var secure = $('#connect-secure').val();
-		var selfSigned = $('#connect-selfSigned').val();
-		var password = $('#connect-password').val();
+    var port = $('#connect-port').val();
+    var secure = $('#connect-secure').val();
+    var selfSigned = false
+    var password = $('#connect-password').val();
+    var channel = getUrlVars()['channel'];
     if (!server) {
       $('#connect-server').closest('.clearfix').addClass('error');
       $('#connect-server').addClass('error');
@@ -59,17 +60,18 @@ var OverviewView = Backbone.View.extend({
       $('#connect-nick').closest('.clearfix').addClass('error');
       $('#connect-nick').addClass('error');
     }
-    if (nick && server) {
+    if (nick) {
       $('form').append(ich.load_image());
       $('#connect-button').addClass('disabled');
 
       var connectInfo = {
         nick: nick,
         server: server,
-				port: port,
-				secure: secure,
-				selfSigned: selfSigned,
-				password: password
+        port: port,
+        secure: secure,
+        selfSigned: selfSigned,
+        password: password,
+        channel: channel
       };
       irc.me = new User(connectInfo);
       irc.me.on('change:nick', irc.appView.renderUserBox);

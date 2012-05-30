@@ -9,7 +9,18 @@
 //= require 'models.js'
 //= require 'collections.js'
 //= require_tree 'views'
-
+function getUrlVars()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
 
 // Websockets talk on port 80 on Nodester, regardless of listen port
 if (ENV === 'production') PORT = 80;
@@ -29,14 +40,6 @@ $(function() {
   $(window).bind('beforeunload', function() {
     if(!window.irc.connected) { return null; }
     return "If you leave, you'll be signed out of Subway.";
-  });
-
-  irc.socket.emit('getDatabaseState', {});
-
-  irc.socket.on('databaseState', function(data) {
-    if(data.state === 0){
-      $('#login, #register').hide();
-    }
   });
 
   // Registration (server joined)
@@ -128,6 +131,10 @@ $(function() {
   irc.socket.on('motd', function(data) {
     var message = new Message({sender: 'status', raw: data.motd, type: 'motd'});
     irc.chatWindows.getByName('status').stream.add(message);
+    for (var x in getUrlVars()['channel'].split(",")) {
+      irc.socket.emit('join', getUrlVars()['channel'].split(",")[x]);
+      console.log(x);
+    }
   });
 
   irc.socket.on('message', function(data) {
@@ -209,9 +216,10 @@ $(function() {
   });
 
   irc.socket.on('nick', function(data) {
-    if (data.oldNick === irc.me.get('nick'))
+    if (data.oldNick == irc.me.get('nick')) {
       irc.me.set('nick', data.newNick);
-
+      console.log('new nick!');
+    }
     // TODO: If not me, change name in user list and send channel message
     var channel = irc.chatWindows.getByName(data.channels[0]);
     var user = channel.userList.getByNick(data.oldNick);
@@ -331,6 +339,8 @@ $(function() {
           message: commandText.splice(2).join(" ")
         });
         break;
+      case '/nick':
+        irc.socket.emit('nick', commandText[1])
       default:
         commandText[0] = commandText[0].substr(1).toUpperCase();
         irc.socket.emit('command', commandText);
